@@ -1,0 +1,8 @@
+{
+  "name": "iRobotix Ops",
+  "description": "Lightweight, offline-first operations tool for drone services with PWA and IndexedDB support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

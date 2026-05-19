@@ -1,0 +1,157 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    function isValidRepair(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 100
+        && data.status in ["open", "in_progress", "completed", "cancelled"]
+        && data.clientId is string && data.clientId.size() > 0
+        && data.deviceModel is string && data.deviceModel.size() <= 50
+        && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
+        && (!('technicianId' in data) || (data.technicianId is string && data.technicianId.size() <= 128))
+        && (!('serialNumber' in data) || (data.serialNumber is string && data.serialNumber.size() <= 50));
+    }
+
+    match /repairs/{repairId} {
+      allow read: if isSignedIn(); // Allow all authenticated for simplicity in this iteration
+      allow list: if isSignedIn();
+      
+      allow create: if isSignedIn() 
+        && isValidId(repairId)
+        && isValidRepair(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidId(repairId)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidRepair(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'status', 'clientId', 'technicianId', 'deviceModel', 'serialNumber', 'updatedAt']);
+        
+      allow delete: if isSignedIn(); // Basic protection
+    }
+
+    function isValidInventory(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.category in ["drone", "battery", "part", "accessory"]
+        && data.quantity is number
+        && data.condition in ["new", "good", "fair", "poor", "broken"]
+        && (!('location' in data) || (data.location is string && data.location.size() <= 100))
+        && (!('cycleCount' in data) || data.cycleCount is number)
+        && (!('flightHours' in data) || data.flightHours is number)
+        && (!('lastMaintenanceDate' in data) || (data.lastMaintenanceDate is string && data.lastMaintenanceDate.size() <= 50));
+    }
+
+    match /inventory/{itemId} {
+      allow read, list: if isSignedIn();
+      
+      allow create: if isSignedIn()
+        && isValidId(itemId)
+        && isValidInventory(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isValidId(itemId)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidInventory(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'quantity', 'condition', 'location', 'cycleCount', 'flightHours', 'lastMaintenanceDate', 'updatedAt']);
+        
+      allow delete: if isSignedIn();
+    }
+
+    function isValidFieldNote(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 100
+        && data.note is string && data.note.size() <= 1000
+        && data.createdBy == request.auth.uid
+        && (!('locationName' in data) || (data.locationName is string && data.locationName.size() <= 100))
+        && (!('latitude' in data) || data.latitude is number)
+        && (!('longitude' in data) || data.longitude is number)
+        && (!('structuralIssues' in data) || (data.structuralIssues is string && data.structuralIssues.size() <= 1000))
+        && (!('weatherConditions' in data) || (data.weatherConditions is string && data.weatherConditions.size() <= 200))
+        && (!('inspectorName' in data) || (data.inspectorName is string && data.inspectorName.size() <= 100))
+        && (!('riskLevel' in data) || data.riskLevel in ['low', 'medium', 'high', 'critical'])
+        && (!('siteStatus' in data) || data.siteStatus in ['safe', 'monitor', 'action_required', 'closed']);
+    }
+
+    match /fieldNotes/{noteId} {
+      allow read: if isSignedIn() && existing().createdBy == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(noteId)
+        && isValidFieldNote(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      
+      allow update: if isSignedIn()
+        && isValidId(noteId)
+        && existing().createdBy == request.auth.uid
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidFieldNote(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'note', 'locationName', 'latitude', 'longitude', 'structuralIssues', 'weatherConditions', 'inspectorName', 'riskLevel', 'siteStatus', 'updatedAt']);
+
+      allow delete: if isSignedIn() && existing().createdBy == request.auth.uid;
+    }
+    function isValidClient(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 20
+        && (!('email' in data) || (data.email is string && data.email.size() <= 100))
+        && (!('address' in data) || (data.address is string && data.address.size() <= 200))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000));
+    }
+
+    match /clients/{clientId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(clientId)
+        && isValidClient(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(clientId)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidClient(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'email', 'address', 'notes', 'updatedAt']);
+      allow delete: if isSignedIn();
+    }
+
+    function isValidClientRequest(data) {
+      return data.clientId is string && data.clientId.size() > 0
+        && data.description is string && data.description.size() > 0 && data.description.size() <= 1000
+        && data.status in ["Submitted", "In Review", "In Progress", "Completed"];
+    }
+
+    match /clientRequests/{requestId} {
+      allow read, list: if isSignedIn();
+      allow create: if isSignedIn()
+        && isValidId(requestId)
+        && isValidClientRequest(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn()
+        && isValidId(requestId)
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidClientRequest(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['clientId', 'description', 'status', 'updatedAt']);
+      allow delete: if isSignedIn();
+    }
+  }
+}

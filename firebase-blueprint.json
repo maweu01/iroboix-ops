@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Repair": {
+      "title": "Repair Ticket",
+      "description": "A drone repair management ticket",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["open", "in_progress", "completed", "cancelled"] },
+        "clientId": { "type": "string" },
+        "technicianId": { "type": "string" },
+        "deviceModel": { "type": "string", "maxLength": 50 },
+        "serialNumber": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "status", "clientId", "deviceModel"]
+    },
+    "Inventory": {
+      "title": "Inventory Item",
+      "description": "Fleet and inventory management",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "enum": ["drone", "battery", "part", "accessory"] },
+        "quantity": { "type": "number" },
+        "condition": { "type": "string", "enum": ["new", "good", "fair", "poor", "broken"] },
+        "location": { "type": "string", "maxLength": 100 },
+        "cycleCount": { "type": "number" },
+        "flightHours": { "type": "number" },
+        "lastMaintenanceDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "quantity", "condition"]
+    },
+    "FieldNote": {
+      "title": "Field Note",
+      "description": "Basic GIS mapping note",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "note": { "type": "string", "maxLength": 1000 },
+        "locationName": { "type": "string", "maxLength": 100 },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "structuralIssues": { "type": "string", "maxLength": 1000 },
+        "weatherConditions": { "type": "string", "maxLength": 200 },
+        "inspectorName": { "type": "string", "maxLength": 100 },
+        "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "siteStatus": { "type": "string", "enum": ["safe", "monitor", "action_required", "closed"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "note", "createdBy"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Client profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 200 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone"]
+    },
+    "ClientRequest": {
+      "title": "Client Request",
+      "description": "Client service request",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["Submitted", "In Review", "In Progress", "Completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "description", "status"]
+    }
+  },
+  "firestore": {
+    "/repairs/{repairId}": {
+      "schema": { "$ref": "#/entities/Repair" },
+      "description": "Repairs collection"
+    },
+    "/inventory/{itemId}": {
+      "schema": { "$ref": "#/entities/Inventory" },
+      "description": "Inventory collection"
+    },
+    "/fieldNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/FieldNote" },
+      "description": "Field Notes collection"
+    },
+    "/clients/{clientId}": {
+      "schema": { "$ref": "#/entities/Client" },
+      "description": "Clients collection"
+    },
+    "/clientRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/ClientRequest" },
+      "description": "Client Requests collection"
+    }
+  }
+}
