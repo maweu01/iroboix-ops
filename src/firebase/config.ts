@@ -1,6 +1,11 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore"; // Added Firestore import
+// Swapped getFirestore for explicit cache initialization engines
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,4 +19,11 @@ const firebaseConfig = {
 // Safe initialization pattern to prevent duplicate app crashes
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app); // Added global Database export
+
+// EXTENSION: Enable offline-first local cache synchronization layers
+// This replaces the old 'export const db = getFirestore(app);' seamlessly
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager() // Handles multi-tab syncing seamlessly on mobile PWAs
+  })
+});
