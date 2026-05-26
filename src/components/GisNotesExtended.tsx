@@ -10,17 +10,15 @@ import shp from "shpjs";
 import * as turf from "@turf/turf";
 
 const aoiLayerStyle = {
-  color: "#06b6d4", // Cyan-500
+  color: "#06b6d4",
   weight: 2.5,
   fillColor: "#06b6d4",
   fillOpacity: 0.15
 };
 
-// Nairobi Central baseline operational parameters
 const NAIROBI_COORDS: [number, number] = [-1.286389, 36.817223];
 const DEFAULT_ZOOM = 13;
 
-// Tracks map state updates seamlessly to preserve locations across tabs
 function MapViewTracker({ onMove }: { onMove: (lat: number, lng: number, zoom: number) => void }) {
   const map = useMapEvents({
     moveend: () => {
@@ -31,7 +29,6 @@ function MapViewTracker({ onMove }: { onMove: (lat: number, lng: number, zoom: n
   return null;
 }
 
-// Custom internal layer handling WebGL/Canvas Leaflet.heat rendering natively
 function HeatmapLayer({ points, intensity, opacity }: { points: any[], intensity: number, opacity: number }) {
   const map = useMapEvents({});
   const heatLayerRef = useRef<any>(null);
@@ -47,7 +44,7 @@ function HeatmapLayer({ points, intensity, opacity }: { points: any[], intensity
       map.removeLayer(heatLayerRef.current);
     }
 
-    // @ts-ignore - plugin hooks array elements directly to map instance
+    // @ts-ignore
     heatLayerRef.current = L.heatLayer(heatPoints, {
       radius: 25,
       blur: 15,
@@ -92,7 +89,6 @@ export default function GisNotesExtended() {
     localStorage.setItem("irobotix_last_zoom", zoom.toString());
   };
 
-  // Ingestion parsing engine executing inside the client sandbox environment
   const processSpatialFile = async (file: File) => {
     const extension = file.name.split(".").pop()?.toLowerCase();
     let parsedGeoJson: any = null;
@@ -105,17 +101,16 @@ export default function GisNotesExtended() {
         const text = await file.text();
         const parser = new DOMParser();
         const kmlDom = parser.parseFromString(text, "text/xml");
-parsedGeoJson = toGeoJSON.kml(kmlDom);
+        parsedGeoJson = toGeoJSON.kml(kmlDom);
       } else if (extension === "zip") {
         const arrayBuffer = await file.arrayBuffer();
         parsedGeoJson = await shp(arrayBuffer);
       } else {
-        alert("Format unsupported. Inject .kml, .geojson, or zipped Shapefile frameworks.");
+        alert("Format unsupported. Use .kml, .geojson, or zipped Shapefile.");
         return;
       }
 
       if (parsedGeoJson) {
-        // Evaluate geometric sizing footprint via turf analytics instantly
         const areaMeters = turf.area(parsedGeoJson);
         const centerFeatures = turf.center(parsedGeoJson);
         const centerCoords = centerFeatures.geometry.coordinates;
@@ -130,7 +125,7 @@ parsedGeoJson = toGeoJSON.kml(kmlDom);
       }
     } catch (err) {
       console.error("Geospatial Processing Failure:", err);
-      alert("Geometry parsing error. Ensure structural data compliance.");
+      alert("Geometry parsing error. Validate formatting layout.");
     }
   };
 
@@ -138,8 +133,8 @@ parsedGeoJson = toGeoJSON.kml(kmlDom);
     if (!previewGeoJson || !uploadMetadata) return;
 
     const newGisDocument = {
-      title: AOI Import: ${uploadMetadata.fileName},
-      noteText: Automated data ingest monitoring for ${uploadMetadata.fileType} vector tracking boundaries. Calculated scope maps to ${uploadMetadata.areaSqMeters} square meters.,
+      title: `AOI Import: ${uploadMetadata.fileName}`,
+      noteText: `Automated ingest monitoring for ${uploadMetadata.fileType} vector boundaries. Calculated scope maps to ${uploadMetadata.areaSqMeters} square meters.`,
       location: {
         lat: uploadMetadata.center[0],
         lng: uploadMetadata.center[1]
@@ -165,7 +160,6 @@ parsedGeoJson = toGeoJSON.kml(kmlDom);
       
       <SyncStatusBar isOnline={isOnline} hasPendingWrites={hasPendingWrites} />
 
-      {/* DASHBOARD MANAGEMENT SIDEPANEL */}
       <div className="w-full md:w-80 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 p-4 flex flex-col gap-4 overflow-y-auto z-10">
         <div>
           <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 flex items-center gap-1.5">
@@ -174,7 +168,6 @@ parsedGeoJson = toGeoJSON.kml(kmlDom);
           </h2>
         </div>
 
-        {/* Mission Type Isolation Filter */}
         <div className="space-y-1.5">
           <label className="block text-[10px] font-bold tracking-wider text-slate-500 uppercase">Mission Pipeline</label>
           <select 
@@ -188,14 +181,13 @@ parsedGeoJson = toGeoJSON.kml(kmlDom);
           </select>
         </div>
 
-        {/* Dynamic Opacity Slider Adjustments */}
         <div className="bg-slate-950 border border-slate-800 rounded p-3 space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Heatmap Layer</span>
             <input 
               type="checkbox" 
               checked={showHeatmap}
-onChange={(e) => setShowHeatmap(e.target.checked)}
+              onChange={(e) => setShowHeatmap(e.target.checked)}
               className="accent-teal-500 cursor-pointer h-3.5 w-3.5"
             />
           </div>
@@ -215,7 +207,6 @@ onChange={(e) => setShowHeatmap(e.target.checked)}
           )}
         </div>
 
-        {/* LOCAL VECTOR VECTOR DRAG SECTOR ENTRY */}
         <div 
           onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
           onDragLeave={() => setIsDraggingFile(false)}
@@ -224,9 +215,9 @@ onChange={(e) => setShowHeatmap(e.target.checked)}
             setIsDraggingFile(false);
             if (e.dataTransfer.files?.[0]) processSpatialFile(e.dataTransfer.files[0]);
           }}
-          className={border-2 border-dashed rounded-lg p-4 text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+          className={`border-2 border-dashed rounded-lg p-4 text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
             isDraggingFile ? "border-teal-500 bg-teal-950/10" : "border-slate-800 bg-slate-950/40 hover:border-slate-700"
-          }}
+          }`}
         >
           <span className="text-xl">🛰️</span>
           <p className="text-xs font-semibold text-slate-300">Ingest Operational Vector</p>
@@ -241,7 +232,6 @@ onChange={(e) => setShowHeatmap(e.target.checked)}
           </label>
         </div>
 
-        {/* Local Parse Context Confirmation Modal UI */}
         {uploadMetadata && (
           <div className="bg-teal-950/20 border border-teal-500/30 rounded p-3 space-y-2 animate-fadeIn">
             <h4 className="text-[11px] font-bold text-teal-400 uppercase tracking-wider">✔ Geometry Isolated</h4>
@@ -260,11 +250,10 @@ onChange={(e) => setShowHeatmap(e.target.checked)}
           </div>
         )}
 
-        {/* Telemetry Asset Ledger Indices */}
         <div className="flex-1 space-y-2 mt-2">
           <label className="block text-[10px] font-bold tracking-wider text-slate-500 uppercase">Live Spatial Sync Index ({filteredNotes.length})</label>
           <div className="space-y-1.5 h-48 md:h-auto overflow-y-auto">
-{filteredNotes.map((note) => (
+            {filteredNotes.map((note) => (
               <div 
                 key={note.id} 
                 onClick={() => note.location && setMapCenter([note.location.lat, note.location.lng])}
@@ -281,7 +270,6 @@ onChange={(e) => setShowHeatmap(e.target.checked)}
         </div>
       </div>
 
-      {/* CORE LEAFLET FRAME CONTAINER SPACE */}
       <div className="flex-1 w-full h-full relative z-0">
         <MapContainer 
           center={mapCenter} 
@@ -331,3 +319,4 @@ onChange={(e) => setShowHeatmap(e.target.checked)}
     </div>
   );
 }
+
