@@ -9,10 +9,8 @@ export default function SyncStatusBar({ isOnline, hasPendingWrites }: SyncProps)
   return (
     <div className="absolute top-16 right-4 z-[1000] pointer-events-none font-mono text-[10px] uppercase tracking-wider flex flex-col gap-1">
       {/* Network Connectivity Badge */}
-      <div className={px-2.5 py-1 rounded shadow-md border flex items-center gap-1.5 backdrop-blur-md ${
-        isOnline ? "bg-slate-900/90 text-teal-400 border-teal-500/30" : "bg-red-950/90 text-red-400 border-red-500/30"
-      }}>
-        <span className={w-1.5 h-1.5 rounded-full ${isOnline ? "bg-teal-400 animate-pulse" : "bg-red-500"}}></span>
+      <div className={isOnline ? "px-2.5 py-1 rounded shadow-md border flex items-center gap-1.5 backdrop-blur-md bg-slate-900/90 text-teal-400 border-teal-500/30" : "px-2.5 py-1 rounded shadow-md border flex items-center gap-1.5 backdrop-blur-md bg-red-950/90 text-red-400 border-red-500/30"}>
+        <span className={isOnline ? "w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" : "w-1.5 h-1.5 rounded-full bg-red-500"}></span>
         {isOnline ? "System Online" : "System Offline"}
       </div>
 
